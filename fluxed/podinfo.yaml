@@ -1,0 +1,102 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+    name: backend
+spec:
+    minReadySeconds: 3
+    revisionHistoryLimit: 5
+    progressDeadlineSeconds: 60
+    strategy:
+        rollingUpdate:
+            maxUnavailable: 0
+        type: RollingUpdate
+    selector:
+        matchLabels:
+            app: backend
+    template:
+        metadata:
+            annotations:
+                prometheus.io/scrape: "true"
+                prometheus.io/port: ENC[AES256_GCM,data:6DOYZg==,iv:6FJH/3KdGLkNwBRYKiAx5tcoz0fMZFU1aWQqHYOpLi4=,tag:4k9vN4E45T86l3vrxxqJwA==,type:str]
+            labels:
+                app: backend
+        spec:
+            containers:
+                - name: backend
+                  image: ghcr.io/stefanprodan/podinfo:6.3.3
+                  imagePullPolicy: IfNotPresent
+                  ports:
+                    - name: http
+                      containerPort: 9898
+                      protocol: TCP
+                    - name: http-metrics
+                      containerPort: 9797
+                      protocol: TCP
+                    - name: grpc
+                      containerPort: 9999
+                      protocol: TCP
+                  command:
+                    - ./podinfo
+                    - --port=9898
+                    - --port-metrics=9797
+                    - --grpc-port=9999
+                    - --grpc-service-name=backend
+                    - --level=info
+                    - --cache-server=cache:6379
+                  env:
+                    - name: PODINFO_UI_COLOR
+                      value: '#34577c'
+                  livenessProbe:
+                    exec:
+                        command:
+                            - podcli
+                            - check
+                            - http
+                            - localhost:9898/healthz
+                    initialDelaySeconds: 5
+                    timeoutSeconds: 5
+                  readinessProbe:
+                    exec:
+                        command:
+                            - podcli
+                            - check
+                            - http
+                            - localhost:9898/readyz
+                    initialDelaySeconds: 5
+                    timeoutSeconds: 5
+                  resources:
+                    limits:
+                        cpu: 2000m
+                        memory: 512Mi
+                    requests:
+                        cpu: 100m
+                        memory: 32Mi
+sops:
+    kms: []
+    gcp_kms: []
+    azure_kv: []
+    hc_vault: []
+    age: []
+    lastmodified: "2023-02-10T09:40:38Z"
+    mac: ENC[AES256_GCM,data:ZuPon3hEqaxe3JeiWqIc7eKAho/wpI7WGWTbgPpcVin9eNitxtwaspPQ66PVeZNkRmQoLTlZlDPxv1sv5w3q+V3XueO9Zjm3ZZuMoyYvrmv/wMN6G4vSYFuELGqme7fVGrJt1At3xQizur5B69Gie+hWwPCaWLy4jZWaua3WC+s=,iv:OG7/1kFQ0uqRPEQIr4mTxl8/OQXoQMc/iTsSBARubl4=,tag:PFEaMMLfnZuL/FwGeJoYVQ==,type:str]
+    pgp:
+        - created_at: "2023-02-10T09:40:35Z"
+          enc: |
+            -----BEGIN PGP MESSAGE-----
+
+            hQGMA1ho3yLJmNgCAQwAy0u7ZwOsKMkKwSqyP3tBTJ1FQMz/QoOkVJSwD4mR/j1r
+            T0JJ9sScY2sP4xltH0v33YDMOXYXIOw2Yz1DHVSFvIyM3TiXOjFaaVyD2mKyyrNi
+            HP/rlOw/f8mtwwytya+0n7zYlap09/Ytv+wrs5Qrigln38iZWxJ1lGUrszaaeoUy
+            7sodyW7uLl0b9H9gQETcSlgApCQGbFf6dxbzUmF7T/ld+NxYnmhwDnO8tC83ta87
+            Zk3gN+UHy8d9p+AUPa0oQ0xGFebpPf9wz2tX1ri9XwFg4cCdAxUtnTjt+/PqlNro
+            sBiNLRFlxJ4rjiFFgEFYUOStZwiUHDNXxYnd2EdEpE3g5BSbIEKQASEluaGfMvAu
+            6NhhqNj6ERYiyUQ/eAGguPx0qoNLXj6fTAyQ1/nJHyrhiO3PhkLYl/sgsJ1ihiyn
+            1C5oveii8m9SDj11/u9B/XLNziea7EYq9ZrYEk23H2V7JsjrSlgyUh5kGQGQsfmB
+            3XsLbtzhDOMLV2nJmtC20l4BN8a8JoFZRRZl/EAXvjZ7Rx0GLZ2/ET672Kzuvj4n
+            ggvey6EGb0hU8bAXimKQkL6ATPlM3ZJfd7Spm1z1r823yJ0LC+0aZaxipnxROjoi
+            XBllVE3siQTc9j4dIsH+
+            =rmzV
+            -----END PGP MESSAGE-----
+          fp: 4BAA608D1B33192981387D8245CA0A4E3DD1C552
+    encrypted_regex: prometheus.io\/port
+    version: 3.7.3
