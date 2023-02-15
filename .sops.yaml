@@ -1,4 +1,4 @@
 creation_rules:
   - path_regex: .*.yaml
-    encrypted_regex: 'prometheus.io\/port'
+    encrypted_regex: 'password'
     pgp: 4BAA608D1B33192981387D8245CA0A4E3DD1C552
